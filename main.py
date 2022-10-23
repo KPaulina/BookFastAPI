@@ -13,17 +13,6 @@ app = FastAPI()
 
 get_db()
 
-# while True:
-#     try:
-#         conn = psycopg2.connect(host='localhost', database='books', user='postgres',
-#                                 password='@DJzdD3qu2^gd+*f53$Ts', cursor_factory=RealDictCursor)
-#         cursor = conn.cursor()
-#         print('Database connection was successful.')
-#         break
-#     except ConnectionError as error:
-#         print('Connecting to database failes', error)
-#         time.sleep(2)
-
 
 class Book(BaseModel):
     title: str
