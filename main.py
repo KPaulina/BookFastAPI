@@ -1,24 +1,17 @@
 from fastapi import FastAPI, status, HTTPException, Response, Depends
 from pydantic import BaseModel
-import psycopg2
-from psycopg2.extras import RealDictCursor
-import time
+from passlib.context import CryptContext
 import models
+import schemas
 from database import engine, get_db
 from sqlalchemy.orm import Session
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
 get_db()
-
-
-class Book(BaseModel):
-    title: str
-    author: str
-    review: str
-    published: bool = True
 
 
 @app.get("/")
@@ -42,7 +35,7 @@ def say_hello(id: int, db: Session = Depends(get_db)):
 
 
 @app.post('/books')
-def create(book: Book, db: Session = Depends(get_db)):
+def create(book: schemas.Book, db: Session = Depends(get_db)):
     new_book = models.Books(**book.dict())
     db.add(new_book)
     db.commit()
@@ -61,7 +54,7 @@ def delete(id: int, db: Session = Depends(get_db)):
 
 
 @app.put("/books/{id}")
-def update(id: int, book: Book, db: Session = Depends(get_db)):
+def update(id: int, book: schemas.Book, db: Session = Depends(get_db)):
     updated_query = db.query(models.Books).filter(models.Books.id == id)
     updated_book = updated_query.first()
     if updated_book is None:
@@ -70,3 +63,17 @@ def update(id: int, book: Book, db: Session = Depends(get_db)):
     updated_query.update(book.dict(), synchronize_session=False)
     db.commit()
     return {'data': updated_query.first()}
+
+
+@app.post('/users', status_code=status.HTTP_201_CREATED,response_model=schemas.UserOut)
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    #hash password
+    hashed_password = pwd_context.hash(user.password)
+    user.password = hashed_password
+
+    new_user = models.User(**user.dict())
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return new_user
