@@ -1,19 +1,22 @@
-from fastapi import FastAPI, status, HTTPException, Response, Depends, APIRouter
+from fastapi import status, HTTPException, Response, Depends, APIRouter
 from sqlalchemy.orm import Session
 from database import get_db
 from models import Books
 from schemas import Book
 
-router = APIRouter()
+router = APIRouter(
+    prefix='/books',
+    tags=['Books']
+)
 
 
-@router.get("/books")
+@router.get("/")
 def get_books(db: Session = Depends(get_db)):
     books = db.query(Books).all()
     return {"books": books}
 
 
-@router.get("/books/{id}")
+@router.get("/{id}")
 def say_hello(id: int, db: Session = Depends(get_db)):
     book = db.query(Books).filter(Books.id == id).first()
     if not book:
@@ -22,7 +25,7 @@ def say_hello(id: int, db: Session = Depends(get_db)):
     return {"book": book}
 
 
-@router.post('/books')
+@router.post('/')
 def create(book: Book, db: Session = Depends(get_db)):
     new_book = Books(**book.dict())
     db.add(new_book)
@@ -31,7 +34,7 @@ def create(book: Book, db: Session = Depends(get_db)):
     return {"book": new_book}
 
 
-@router.delete('/books/{id}', status_code=status.HTTP_204_NO_CONTENT)
+@router.delete('/{id}', status_code=status.HTTP_204_NO_CONTENT)
 def delete(id: int, db: Session = Depends(get_db)):
     deleted_book = db.query(Books).filter(Books.id == id)
     if deleted_book.first() is None:
@@ -41,7 +44,7 @@ def delete(id: int, db: Session = Depends(get_db)):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.put("/books/{id}")
+@router.put("/{id}")
 def update(id: int, book: Book, db: Session = Depends(get_db)):
     updated_query = db.query(Books).filter(Books.id == id)
     updated_book = updated_query.first()
