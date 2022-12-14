@@ -4,19 +4,19 @@ from database import get_db
 from models import Books
 from schemas import Book
 
-router = APIRouter(
+book_router = APIRouter(
     prefix='/books',
     tags=['Books']
 )
 
 
-@router.get("/")
+@book_router.get("/")
 def get_books(db: Session = Depends(get_db)):
     books = db.query(Books).all()
     return {"books": books}
 
 
-@router.get("/{id}")
+@book_router.get("/{id}")
 def say_hello(id: int, db: Session = Depends(get_db)):
     book = db.query(Books).filter(Books.id == id).first()
     if not book:
@@ -25,7 +25,7 @@ def say_hello(id: int, db: Session = Depends(get_db)):
     return {"book": book}
 
 
-@router.post('/')
+@book_router.post('/')
 def create(book: Book, db: Session = Depends(get_db)):
     new_book = Books(**book.dict())
     db.add(new_book)
@@ -34,7 +34,7 @@ def create(book: Book, db: Session = Depends(get_db)):
     return {"book": new_book}
 
 
-@router.delete('/{id}', status_code=status.HTTP_204_NO_CONTENT)
+@book_router.delete('/{id}', status_code=status.HTTP_204_NO_CONTENT)
 def delete(id: int, db: Session = Depends(get_db)):
     deleted_book = db.query(Books).filter(Books.id == id)
     if deleted_book.first() is None:
@@ -44,7 +44,7 @@ def delete(id: int, db: Session = Depends(get_db)):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.put("/{id}")
+@book_router.put("/{id}")
 def update(id: int, book: Book, db: Session = Depends(get_db)):
     updated_query = db.query(Books).filter(Books.id == id)
     updated_book = updated_query.first()
