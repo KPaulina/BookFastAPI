@@ -1,5 +1,6 @@
 from fastapi import status, HTTPException, Response, Depends, APIRouter
 from sqlalchemy.orm import Session
+import oauth2
 from database import get_db
 from models import Books
 from schemas import Book
@@ -11,13 +12,13 @@ book_router = APIRouter(
 
 
 @book_router.get("/")
-def get_books(db: Session = Depends(get_db)):
+def get_books(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     books = db.query(Books).all()
     return {"books": books}
 
 
 @book_router.get("/{id}")
-def say_hello(id: int, db: Session = Depends(get_db)):
+def say_hello(id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     book = db.query(Books).filter(Books.id == id).first()
     if not book:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
@@ -26,7 +27,8 @@ def say_hello(id: int, db: Session = Depends(get_db)):
 
 
 @book_router.post('/')
-def create(book: Book, db: Session = Depends(get_db)):
+def create(book: Book, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+    print(current_user.email)
     new_book = Books(**book.dict())
     db.add(new_book)
     db.commit()
@@ -35,7 +37,7 @@ def create(book: Book, db: Session = Depends(get_db)):
 
 
 @book_router.delete('/{id}', status_code=status.HTTP_204_NO_CONTENT)
-def delete(id: int, db: Session = Depends(get_db)):
+def delete(id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     deleted_book = db.query(Books).filter(Books.id == id)
     if deleted_book.first() is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
@@ -45,7 +47,7 @@ def delete(id: int, db: Session = Depends(get_db)):
 
 
 @book_router.put("/{id}")
-def update(id: int, book: Book, db: Session = Depends(get_db)):
+def update(id: int, book: Book, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     updated_query = db.query(Books).filter(Books.id == id)
     updated_book = updated_query.first()
     if updated_book is None:
